@@ -27,7 +27,7 @@ public interface INetHelper {
 ###  动态代理流程概述
 介绍完动态代理的前置知识，接下来针对整个动态代理流程做一个梳理。如图所示，描述了动态代理的大致流程 主要分为四个部分：ProxyBuilder构造、内存动态生成类、获取构造函数、反射获取实例，其中最重要的部分是内存动态生成类
 </br></br>
-<img src = "/Users/yuanhao.zhang/Desktop/复习/JAVA知识/动态代理/DynamicProxy/png/动态代理流程图.png"/></br>
+<img src = "png/动态代理流程图.png"/></br>
 ### 构造ProxyBuilder
 从动态代理的使用入手，调用Proxy.newProxyInstance生成实际类：
 ```java
