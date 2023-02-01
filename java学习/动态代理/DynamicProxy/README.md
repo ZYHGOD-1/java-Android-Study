@@ -423,6 +423,153 @@ final byte[] classFile = gen.generateClassFile();
 关于写入，就是写入字节码相关的东西，因为这一部分比较庞大，就不展开说了。因此这里可以知道的是，实际上在动态代理的过程中，在内存中生成了字节码。因此动态代理实际上对于性能，是存在一定的影响的。
 例如Android中的Retrofit，使用动态代理实现自己的功能，当网络的api非常多的时候，会带来不小的内存损耗
 
-## 代理模式（上）
-## 代理模式（下）
-## 代理模式在Android源码中的应用
+## 代理模式
+### 代理模式基础知识
+代理模式的定义：为其他对象提供一个代理对象，以控制这个对象的访问</br>
+当其他对象直接访问存在困难时，可以通过中间代理实现对这个对象访问或者控制。</br>
+如下是代理模式的UML图：</br>
+</br>
+<img src="png/代理模式.png"/></br>
+代理类ProxySubject和真实对象RealSubject实现同一个接口，也就是说，二者对外暴露的功能是一样的。客户端不直接访问RealSubject,而是通过ProxySubject访问。ProxySubject的内在逻辑通过RealSubject去实现。</br>
+用代码来描述，有这样一个接口：
+```java
+public interface IProxy {
+    void doSomething();
+}
+```
+被代理类RealProxy;
+```java
+public class RealProxy  implements IProxy{
+    @Override
+    public void doSomething() {
+        System.out.println("do real something");
+    }
+}
+```
+代理类ProxySubject:
+```java
+public class ProxySubject implements IProxy {
+    IProxy proxy = new RealProxy();
+
+    public ProxySubject(IProxy proxy) {
+        this.proxy = proxy;
+    }
+
+    public ProxySubject() {
+    }
+
+    @Override
+    public void doSomething() {
+        proxy.doSomething();
+    }
+}
+```
+这里ProxySubject就是对RealProxy的代理，客户端通过ProxySubject实现对RealProxy的访问
+### 静态代理与动态代理
+上文所举的例子，就是代理模式的一种：静态代理。一个固定的接口，由代理类和被代理类去实现，代理类负责访问控制。这种情况下属于静态代理。也就是说，接口是定死的。当然多个接口也可以实现，只需要代理类去实现所有的接口即可。这些情况都符合一个共同的特点：接口是定死的，不是未知的，不能够参数化。
+java的动态代理就是为了解决这个问题。接受参数化的接口列表，然后通过这些列表动态生成代理类。在invoke方法中通过方法名等执行不同的逻辑。</br>
+但实际上，其方法的具体实现方式是和静态代理一样的。我们来看一下上文中生成的INetHelper的代理类：
+```java
+public final class $Proxy0 extends Proxy implements INetHelper {
+    private static Method m1;
+    private static Method m3;
+    private static Method m2;
+    private static Method m4;
+    private static Method m0;
+
+    public $Proxy0(InvocationHandler var1) throws  {
+        super(var1);
+    }
+
+    public final boolean equals(Object var1) throws  {
+        try {
+            return (Boolean)super.h.invoke(this, m1, new Object[]{var1});
+        } catch (RuntimeException | Error var3) {
+            throw var3;
+        } catch (Throwable var4) {
+            throw new UndeclaredThrowableException(var4);
+        }
+    }
+
+    public final void post() throws  {
+        try {
+            super.h.invoke(this, m3, (Object[])null);
+        } catch (RuntimeException | Error var2) {
+            throw var2;
+        } catch (Throwable var3) {
+            throw new UndeclaredThrowableException(var3);
+        }
+    }
+
+    public final String toString() throws  {
+        try {
+            return (String)super.h.invoke(this, m2, (Object[])null);
+        } catch (RuntimeException | Error var2) {
+            throw var2;
+        } catch (Throwable var3) {
+            throw new UndeclaredThrowableException(var3);
+        }
+    }
+
+    public final void get() throws  {
+        try {
+            super.h.invoke(this, m4, (Object[])null);
+        } catch (RuntimeException | Error var2) {
+            throw var2;
+        } catch (Throwable var3) {
+            throw new UndeclaredThrowableException(var3);
+        }
+    }
+
+    public final int hashCode() throws  {
+        try {
+            return (Integer)super.h.invoke(this, m0, (Object[])null);
+        } catch (RuntimeException | Error var2) {
+            throw var2;
+        } catch (Throwable var3) {
+            throw new UndeclaredThrowableException(var3);
+        }
+    }
+
+    static {
+        try {
+            m1 = Class.forName("java.lang.Object").getMethod("equals", Class.forName("java.lang.Object"));
+            m3 = Class.forName("INetHelper").getMethod("post");
+            m2 = Class.forName("java.lang.Object").getMethod("toString");
+            m4 = Class.forName("INetHelper").getMethod("get");
+            m0 = Class.forName("java.lang.Object").getMethod("hashCode");
+        } catch (NoSuchMethodException var2) {
+            throw new NoSuchMethodError(var2.getMessage());
+        } catch (ClassNotFoundException var3) {
+            throw new NoClassDefFoundError(var3.getMessage());
+        }
+    }
+}
+```
+这里就佷清晰明了了。实际上动态代理也是通过invokeHandler去实现的。本质上，静态代理和动态代理的区别还是在支持多个接口参数化的问题上有所区分
+## 代理模式的应用
+说到这里其实大伙们可能会有一些疑问：代理模式我确实清楚了，但是实际使用怎么用呢？如何用到项目中去呢？纸上空谈，总是不能够深刻理解。因此我们对代理模式的应用做一个简单的举例</br>
+代理模式的应用纬度上，可以分为四类：
+1. 远程代理
+2. 虚拟代理
+3. 智能引用
+4. 保护代理
+
+远程代理很好理解，如果一个对象在远程服务器上，那么客户端是不能直接访问的，要通过代理去访问。比如在Android中涉及跨进程通信时，会使用Binder机制进行通信。Binder会生成一个代理对象给客户端。客户端通过这个代理对象实现对别的进程的访问</br>
+虚拟代理是指，在使用一些消耗资源较大的对象时，延迟初始化。比如有一个对象，创建他消耗的资源比较多，我们在进行代理时，用到才会初始化
+智能引用其实就是除了使用被代理类的功能，还加上一些新的功能。类似于装饰器模式
+保护代理实际上就是因为某种原因无法直接访问，从而使用代理模式。Android中的Binder跨进程通信就是这个机制。在下文会进行一个简要的阐述
+
+## Binder跨进程通信机制简要分析
+这里对Binder机制做一个简要的阐述，不会深入源码级别，只是对整个流程上进行一个梳理</br>
+Binder机制可以分为4个大块：
+1. BinderClient 跨进程通信请求方
+2. BinderServer 服务方，例如AMS、WMS
+3. ServerManager,类似于DNS服务器，寻址binderServer的代理
+4. BinderDriver，Linux内核层关于Binder跨进程通信的驱动
+
+<img src="png/Binder机制简要描述.png"/>
+Binder server在生成一个服务实体的时候，例如AMS,会在BinderDriver中生成一个Binder节点AMS_BNode。这个Binder节点在生成的时候还会生成一个Binder引用，并在serverManager中进行注册。serverManager中通过<服务名，B_REF>来记录引用的保存。当客户端访问AMS时，会先访问ServerManager，将ams的名字交给ServerManager，ServerManager返回B_REF
+交给clinet,clinet通过这个引用访问BNode，再通过BinderDriver 的mmap实现跨进程的通信。</br>
+这里其实可以看到，ServerManager返回的引用，就类似于一个代理类。通过这个代理类，可以做到跨进程的通信。这里其实Android中通过aidl来进行描述这样一种通信，我们常用的也有IActivityManager等。代理节点本身也使用了一种代理模式的思想：在公共的空间，建立一个中转站，承上启下。上通BinderServer，下通BinderClient。这就是保护代理的精髓。
+
